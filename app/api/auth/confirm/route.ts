@@ -13,86 +13,68 @@ export async function GET(request: NextRequest) {
   redirectTo.searchParams.delete('type')
   redirectTo.searchParams.delete('next')
 
-  if (token_hash && type) {
-    const supabase = await createClient()
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        type,
-        token_hash,
-      })
-
-      if (!error) {
-        // Handle different verification types
-        if (type === 'recovery') {
-          // Password reset verification successful - redirect to update password page
-          redirectTo.pathname = '/auth/update-password'
-          return NextResponse.redirect(redirectTo)
-        } else {
-          // Email verification successful - redirect to auth page with success message
-          redirectTo.pathname = '/auth'
-          redirectTo.searchParams.set('verified', 'true')
-          return NextResponse.redirect(redirectTo)
-        }
-      }
-
-      // Log the error for debugging but still check if user is authenticated
-      console.error('Verification error:', error)
-
-      // For password reset, don't try to recover from errors
-      if (type === 'recovery') {
-        redirectTo.pathname = '/auth/verification-error'
-        redirectTo.searchParams.set('error', 'recovery_failed')
-        return NextResponse.redirect(redirectTo)
-      }
-
-      // Sometimes verification "fails" but user is actually authenticated
-      // Check if user is authenticated anyway
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user && user.email_confirmed_at) {
-        // User is authenticated and verified, treat as success
-        redirectTo.pathname = '/auth'
-        redirectTo.searchParams.set('verified', 'true')
-        return NextResponse.redirect(redirectTo)
-      }
-
-      // Verification truly failed
-      redirectTo.pathname = '/auth/verification-error'
-      redirectTo.searchParams.set('error', 'verification_failed')
-      return NextResponse.redirect(redirectTo)
-
-    } catch (error) {
-      console.error('Unexpected verification error:', error)
-
-      // For password reset, don't try to recover from errors
-      if (type === 'recovery') {
-        redirectTo.pathname = '/auth/verification-error'
-        redirectTo.searchParams.set('error', 'recovery_failed')
-        return NextResponse.redirect(redirectTo)
-      }
-
-      // Check if user is authenticated despite the error
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (user && user.email_confirmed_at) {
-          redirectTo.pathname = '/auth'
-          redirectTo.searchParams.set('verified', 'true')
-          return NextResponse.redirect(redirectTo)
-        }
-      } catch {
-        // Ignore nested error
-      }
-
-      redirectTo.pathname = '/auth/verification-error'
-      redirectTo.searchParams.set('error', 'verification_failed')
-      return NextResponse.redirect(redirectTo)
-    }
+  // Missing required parameters
+  if (!token_hash || !type) {
+    redirectTo.pathname = '/auth/verification-error'
+    redirectTo.searchParams.set('error', 'invalid_link')
+    redirectTo.searchParams.set('message', 'Ongeldige verificatielink. Probeer opnieuw te registreren.')
+    return NextResponse.redirect(redirectTo)
   }
 
-  // Missing parameters
-  redirectTo.pathname = '/auth/verification-error'
-  redirectTo.searchParams.set('error', 'invalid_link')
-  return NextResponse.redirect(redirectTo)
+  const supabase = await createClient()
+
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      type,
+      token_hash,
+    })
+
+    // Verification successful
+    if (!error && data.user) {
+      if (type === 'recovery') {
+        // Password reset verification - redirect to update password page
+        redirectTo.pathname = '/auth/update-password'
+        redirectTo.searchParams.set('access_token', data.session?.access_token || '')
+        redirectTo.searchParams.set('refresh_token', data.session?.refresh_token || '')
+        return NextResponse.redirect(redirectTo)
+      } else {
+        // Email/signup verification - redirect to login with success message
+        redirectTo.pathname = '/auth'
+        redirectTo.searchParams.set('verified', 'true')
+        redirectTo.searchParams.set('message', 'E-mail succesvol bevestigd! U kunt nu inloggen.')
+        return NextResponse.redirect(redirectTo)
+      }
+    }
+
+    // Handle specific error cases
+    let errorType = 'verification_failed'
+    let errorMessage = 'Verificatie mislukt. Probeer opnieuw.'
+
+    if (error) {
+      if (error.message.includes('expired') || error.message.includes('invalid')) {
+        errorType = type === 'recovery' ? 'recovery_expired' : 'verification_expired'
+        errorMessage = type === 'recovery'
+          ? 'Wachtwoord reset link is verlopen. Vraag een nieuwe link aan.'
+          : 'Verificatielink is verlopen. Probeer opnieuw te registreren.'
+      } else if (error.message.includes('already confirmed')) {
+        // User already verified - redirect to login
+        redirectTo.pathname = '/auth'
+        redirectTo.searchParams.set('message', 'E-mail is al bevestigd. U kunt inloggen.')
+        return NextResponse.redirect(redirectTo)
+      }
+    }
+
+    redirectTo.pathname = '/auth/verification-error'
+    redirectTo.searchParams.set('error', errorType)
+    redirectTo.searchParams.set('message', errorMessage)
+    return NextResponse.redirect(redirectTo)
+
+  } catch (error) {
+    console.error('Verification error:', error)
+
+    redirectTo.pathname = '/auth/verification-error'
+    redirectTo.searchParams.set('error', 'server_error')
+    redirectTo.searchParams.set('message', 'Serverfout bij verificatie. Probeer het later opnieuw.')
+    return NextResponse.redirect(redirectTo)
+  }
 }

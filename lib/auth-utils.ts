@@ -125,3 +125,114 @@ export function formatUserResponse(user: any, profile?: any) {
     })
   }
 }
+
+/**
+ * Simple in-memory rate limiting for auth endpoints
+ * In production, use Redis or similar persistent storage
+ */
+const rateLimitStore = new Map<string, { attempts: number; resetTime: number }>()
+
+/**
+ * Rate limiting configuration
+ */
+export const RATE_LIMITS = {
+  RESEND_VERIFICATION: { maxAttempts: 3, windowMs: 60000 }, // 3 attempts per minute
+  PASSWORD_RESET: { maxAttempts: 3, windowMs: 300000 }, // 3 attempts per 5 minutes
+  LOGIN_ATTEMPTS: { maxAttempts: 5, windowMs: 900000 }, // 5 attempts per 15 minutes
+}
+
+/**
+ * Check if an IP or email is rate limited for a specific action
+ */
+export function isRateLimited(
+  identifier: string,
+  action: keyof typeof RATE_LIMITS
+): { limited: boolean; resetTime?: number; attemptsLeft?: number } {
+  const key = `${action}:${identifier}`
+  const config = RATE_LIMITS[action]
+  const now = Date.now()
+
+  const record = rateLimitStore.get(key)
+
+  if (!record || now > record.resetTime) {
+    // No record or expired - reset
+    rateLimitStore.set(key, { attempts: 0, resetTime: now + config.windowMs })
+    return { limited: false, attemptsLeft: config.maxAttempts }
+  }
+
+  if (record.attempts >= config.maxAttempts) {
+    return {
+      limited: true,
+      resetTime: record.resetTime,
+      attemptsLeft: 0
+    }
+  }
+
+  return {
+    limited: false,
+    attemptsLeft: config.maxAttempts - record.attempts
+  }
+}
+
+/**
+ * Record an attempt for rate limiting
+ */
+export function recordAttempt(identifier: string, action: keyof typeof RATE_LIMITS): void {
+  const key = `${action}:${identifier}`
+  const config = RATE_LIMITS[action]
+  const now = Date.now()
+
+  const record = rateLimitStore.get(key)
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(key, { attempts: 1, resetTime: now + config.windowMs })
+  } else {
+    record.attempts++
+  }
+}
+
+/**
+ * Get rate limit error message in Dutch
+ */
+export function getRateLimitMessage(action: keyof typeof RATE_LIMITS, resetTime: number): string {
+  const minutes = Math.ceil((resetTime - Date.now()) / 60000)
+
+  switch (action) {
+    case 'RESEND_VERIFICATION':
+      return `Te veel verificatie-emails verzonden. Probeer over ${minutes} minuut${minutes > 1 ? 'en' : ''} opnieuw.`
+    case 'PASSWORD_RESET':
+      return `Te veel wachtwoord reset verzoeken. Probeer over ${minutes} minuut${minutes > 1 ? 'en' : ''} opnieuw.`
+    case 'LOGIN_ATTEMPTS':
+      return `Te veel inlogpogingen. Probeer over ${minutes} minuut${minutes > 1 ? 'en' : ''} opnieuw.`
+    default:
+      return `Te veel verzoeken. Probeer over ${minutes} minuut${minutes > 1 ? 'en' : ''} opnieuw.`
+  }
+}
+
+/**
+ * Clean up expired rate limit records (call periodically)
+ */
+export function cleanupRateLimits(): void {
+  const now = Date.now()
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key)
+    }
+  }
+}
+
+/**
+ * Get client IP address from request
+ */
+export function getClientIP(request: Request): string {
+  // Try various headers for IP address
+  const forwarded = request.headers.get('x-forwarded-for')
+  const realIP = request.headers.get('x-real-ip')
+  const remoteAddr = request.headers.get('remote-addr')
+
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
+  }
+
+  return realIP || remoteAddr || 'unknown'
+}
