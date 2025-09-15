@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { CheckCircle } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
@@ -36,8 +38,22 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
   const supabase = createClient()
+
+  useEffect(() => {
+    // Show success message if coming from email verification
+    if (searchParams.get('verified') === 'true') {
+      setMessage('E-mail succesvol geverifieerd! U kunt nu inloggen.')
+    }
+
+    // Show error message if profile not found
+    if (searchParams.get('error') === 'profile_not_found') {
+      setMessage('Er is een probleem met uw account. Probeer opnieuw in te loggen.')
+    }
+  }, [searchParams])
 
   const form = useForm<AuthForm>({
     resolver: zodResolver(isLogin ? loginSchema : registerSchema),
@@ -60,61 +76,62 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password,
+        // Use the new login API endpoint
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: values.email,
+            password: values.password,
+          }),
         })
 
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setMessage('Ongeldige e-mail of wachtwoord')
-          } else if (error.message.includes('Email not confirmed')) {
-            setMessage('Bevestig eerst uw e-mail voordat u inlogt')
-          } else {
-            setMessage('Fout bij inloggen: ' + error.message)
-          }
+        const result = await response.json()
+
+        if (!response.ok) {
+          setMessage(result.error)
           return
         }
 
-        // Redirect will be handled by middleware
+        // Login successful - redirect will be handled by middleware
         window.location.href = '/'
       } else {
-        // Sign up - pass metadata for the trigger to use
-        const { data, error } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
-          options: {
-            data: {
-              name: values.name || '',
-              phone: values.phone || '',
-              company_name: values.company_name || '',
-              invoice_address: {
-                street: values.invoice_street || '',
-                city: values.invoice_city || '',
-                postal_code: values.invoice_postal_code || '',
-                country: values.invoice_country || ''
-              }
+        // Use the new signup API endpoint
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: values.email,
+            password: values.password,
+            name: values.name || '',
+            phone: values.phone || '',
+            company_name: values.company_name || '',
+            invoice_address: {
+              street: values.invoice_street || '',
+              city: values.invoice_city || '',
+              postal_code: values.invoice_postal_code || '',
+              country: values.invoice_country || ''
             }
-          }
+          }),
         })
 
-        if (error) {
-          if (error.message.includes('User already registered')) {
-            setMessage('Dit e-mailadres is al geregistreerd. Probeer in te loggen.')
-          } else if (error.message.includes('Password should be at least')) {
-            setMessage('Wachtwoord moet minimaal 6 tekens lang zijn')
-          } else {
-            setMessage('Fout bij registreren: ' + error.message)
-          }
+        const result = await response.json()
+
+        if (!response.ok) {
+          setMessage(result.error)
           return
         }
 
-        if (data.user) {
-          setMessage('Account aangemaakt! Check je e-mail voor verificatie.')
-        }
+        // Signup successful - redirect to check email page
+        router.push(`/auth/check-email?email=${encodeURIComponent(values.email)}`)
       }
-    } catch {
-      setMessage('Er is iets fout gegaan')
+    } catch (error) {
+      console.error('Auth error:', error)
+      setMessage('Er is iets fout gegaan. Probeer het opnieuw.')
     } finally {
       setLoading(false)
     }
@@ -277,11 +294,16 @@ export default function AuthPage() {
               />
 
               {message && (
-                <div className={`text-sm p-3 rounded ${
-                  message.includes('aangemaakt')
+                <div className={`text-sm p-3 rounded flex items-center gap-2 ${
+                  message.includes('succesvol geverifieerd')
+                    ? 'bg-green-50 text-green-800'
+                    : message.includes('aangemaakt')
                     ? 'bg-green-50 text-green-800'
                     : 'bg-red-50 text-red-800'
                 }`}>
+                  {message.includes('succesvol geverifieerd') && (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
                   {message}
                 </div>
               )}

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { mapAuthError, formatUserResponse, isEmailVerified } from '@/lib/auth-utils'
 
 export async function GET() {
   const supabase = await createClient()
@@ -11,7 +12,15 @@ export async function GET() {
 
   if (userError || !user) {
     return NextResponse.json(
-      { error: 'Not authenticated' },
+      { error: 'Niet ingelogd' },
+      { status: 401 }
+    )
+  }
+
+  // Check if email is verified
+  if (!isEmailVerified(user)) {
+    return NextResponse.json(
+      { error: 'E-mail nog niet bevestigd. Controleer uw mailbox en klik op de verificatielink.' },
       { status: 401 }
     )
   }
@@ -25,16 +34,12 @@ export async function GET() {
 
   if (profileError) {
     return NextResponse.json(
-      { error: 'Profile not found' },
+      { error: 'Gebruikersprofiel niet gevonden' },
       { status: 404 }
     )
   }
 
   return NextResponse.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      ...profile,
-    },
+    user: formatUserResponse(user, profile),
   })
 }

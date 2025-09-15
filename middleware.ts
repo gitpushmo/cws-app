@@ -32,8 +32,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Define public routes
-  const publicRoutes = ['/auth', '/']
+  // Define public routes (including auth-related pages)
+  const publicRoutes = ['/auth', '/api/auth', '/']
   const isPublicRoute = publicRoutes.some(route =>
     request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(route + '/')
   )
@@ -45,8 +45,80 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // If user is authenticated, check email verification status
+  if (user && !isPublicRoute) {
+    // Check if email is verified
+    if (!user.email_confirmed_at) {
+      // User exists but email not verified - redirect to check email page
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/check-email'
+      url.searchParams.set('email', user.email || '')
+      return NextResponse.redirect(url)
+    }
+
+    // Get user profile to determine role
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    // If profile doesn't exist, redirect to auth page
+    if (error || !profile) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth'
+      url.searchParams.set('error', 'profile_not_found')
+      return NextResponse.redirect(url)
+    }
+
+    // Role-based route protection
+    const currentPath = request.nextUrl.pathname
+    const userRole = profile.role
+
+    // Define role-based route access
+    const roleRoutes: Record<string, string[]> = {
+      admin: ['/admin', '/operator', '/klant'],
+      operator: ['/operator', '/klant'],
+      customer: ['/klant'],
+    }
+
+    const allowedPaths = roleRoutes[userRole] || ['/klant']
+    const hasAccess = allowedPaths.some(path => currentPath.startsWith(path))
+
+    if (!hasAccess) {
+      // Redirect to user's default dashboard
+      const url = request.nextUrl.clone()
+      if (userRole === 'admin') {
+        url.pathname = '/admin'
+      } else if (userRole === 'operator') {
+        url.pathname = '/operator'
+      } else {
+        url.pathname = '/klant'
+      }
+      return NextResponse.redirect(url)
+    }
+  }
+
   // If user is authenticated and on auth page, redirect based on role
   if (user && request.nextUrl.pathname.startsWith('/auth')) {
+    // Check email verification first
+    if (!user.email_confirmed_at) {
+      // Allow access to verification-related auth pages
+      const allowedAuthPages = ['/auth/check-email', '/auth/verification-error']
+      const isAllowedAuthPage = allowedAuthPages.some(page =>
+        request.nextUrl.pathname.startsWith(page)
+      )
+
+      if (!isAllowedAuthPage) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/auth/check-email'
+        url.searchParams.set('email', user.email || '')
+        return NextResponse.redirect(url)
+      }
+
+      return supabaseResponse
+    }
+
     // Get user profile to determine role
     const { data: profile, error } = await supabase
       .from('profiles')
@@ -62,6 +134,7 @@ export async function middleware(request: NextRequest) {
       return supabaseResponse
     }
 
+    // Redirect verified users to their dashboard
     if (profile.role === 'customer') {
       url.pathname = '/klant'
     } else if (profile.role === 'operator') {

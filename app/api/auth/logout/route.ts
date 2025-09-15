@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { mapAuthError } from '@/lib/auth-utils'
 
 export async function POST() {
   const supabase = await createClient()
@@ -8,10 +9,13 @@ export async function POST() {
 
   if (error) {
     return NextResponse.json(
-      { error: 'Failed to sign out' },
+      { error: mapAuthError(error) },
       { status: 500 }
     )
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({
+    success: true,
+    message: 'Succesvol uitgelogd'
+  })
 }
