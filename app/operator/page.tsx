@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import LogoutButton from '@/components/auth/logout-button'
 
 export default async function OperatorDashboard() {
   const supabase = await createClient()
@@ -25,12 +26,6 @@ export default async function OperatorDashboard() {
     redirect('/auth')
   }
 
-  async function handleSignOut() {
-    'use server'
-    const supabase = await createClient()
-    await supabase.auth.signOut()
-    redirect('/auth')
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,11 +39,7 @@ export default async function OperatorDashboard() {
               <span className="text-sm text-gray-600">
                 Welkom, {profile.name}
               </span>
-              <form action={handleSignOut}>
-                <Button variant="outline" type="submit">
-                  Uitloggen
-                </Button>
-              </form>
+              <LogoutButton />
             </div>
           </div>
         </div>

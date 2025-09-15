@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
   // If user is authenticated and on auth page, redirect based on role
   if (user && request.nextUrl.pathname.startsWith('/auth')) {
     // Get user profile to determine role
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -56,14 +56,20 @@ export async function middleware(request: NextRequest) {
 
     const url = request.nextUrl.clone()
 
-    if (profile?.role === 'customer') {
+    // If profile doesn't exist or there's an error, stay on auth page to show error
+    if (error || !profile) {
+      // Allow access to auth page to show profile creation error
+      return supabaseResponse
+    }
+
+    if (profile.role === 'customer') {
       url.pathname = '/klant'
-    } else if (profile?.role === 'operator') {
+    } else if (profile.role === 'operator') {
       url.pathname = '/operator'
-    } else if (profile?.role === 'admin') {
+    } else if (profile.role === 'admin') {
       url.pathname = '/admin'
     } else {
-      // Fallback for users without profiles
+      // Fallback for users without valid roles
       url.pathname = '/klant'
     }
 

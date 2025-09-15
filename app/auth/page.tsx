@@ -8,17 +8,23 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
-const authSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
   password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
-  name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn').optional(),
-  phone: z.string().min(10, 'Telefoonnummer moet minimaal 10 tekens zijn').optional(),
 })
 
-type AuthForm = z.infer<typeof authSchema>
+const registerSchema = z.object({
+  email: z.string().email('Ongeldig e-mailadres'),
+  password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
+  name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn'),
+  phone: z.string().min(10, 'Telefoonnummer moet minimaal 10 tekens zijn'),
+})
+
+type LoginForm = z.infer<typeof loginSchema>
+type RegisterForm = z.infer<typeof registerSchema>
+type AuthForm = LoginForm & Partial<Pick<RegisterForm, 'name' | 'phone'>>
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -28,7 +34,7 @@ export default function AuthPage() {
   const supabase = createClient()
 
   const form = useForm<AuthForm>({
-    resolver: zodResolver(authSchema),
+    resolver: zodResolver(isLogin ? loginSchema : registerSchema),
     defaultValues: {
       email: '',
       password: '',
@@ -49,45 +55,48 @@ export default function AuthPage() {
         })
 
         if (error) {
-          setMessage('Ongeldige inloggegevens')
+          if (error.message.includes('Invalid login credentials')) {
+            setMessage('Ongeldige e-mail of wachtwoord')
+          } else if (error.message.includes('Email not confirmed')) {
+            setMessage('Bevestig eerst uw e-mail voordat u inlogt')
+          } else {
+            setMessage('Fout bij inloggen: ' + error.message)
+          }
           return
         }
 
         // Redirect will be handled by middleware
         window.location.href = '/'
       } else {
-        // Sign up
+        // Sign up - pass metadata for the trigger to use
         const { data, error } = await supabase.auth.signUp({
           email: values.email,
           password: values.password,
+          options: {
+            data: {
+              name: values.name || '',
+              phone: values.phone || '',
+              shipping_address: {} // Empty shipping address for now
+            }
+          }
         })
 
         if (error) {
-          setMessage('Fout bij registreren: ' + error.message)
+          if (error.message.includes('User already registered')) {
+            setMessage('Dit e-mailadres is al geregistreerd. Probeer in te loggen.')
+          } else if (error.message.includes('Password should be at least')) {
+            setMessage('Wachtwoord moet minimaal 6 tekens lang zijn')
+          } else {
+            setMessage('Fout bij registreren: ' + error.message)
+          }
           return
         }
 
         if (data.user) {
-          // Create profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: values.email,
-              name: values.name || '',
-              phone: values.phone || '',
-              role: 'customer', // Default role
-            })
-
-          if (profileError) {
-            setMessage('Fout bij maken profiel: ' + profileError.message)
-            return
-          }
-
           setMessage('Account aangemaakt! Check je e-mail voor verificatie.')
         }
       }
-    } catch (error) {
+    } catch {
       setMessage('Er is iets fout gegaan')
     } finally {
       setLoading(false)
@@ -201,7 +210,11 @@ export default function AuthPage() {
           <div className="mt-4 text-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin)
+                form.reset()
+                setMessage('')
+              }}
               className="text-sm text-blue-600 hover:underline"
             >
               {isLogin
