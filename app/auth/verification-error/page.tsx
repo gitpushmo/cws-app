@@ -3,7 +3,8 @@
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, ArrowLeft } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 
 export default function VerificationErrorPage() {
   const searchParams = useSearchParams()
@@ -46,22 +47,35 @@ export default function VerificationErrorPage() {
         </CardHeader>
 
         <CardContent className="text-center space-y-4">
-          <div className="text-sm text-gray-600 space-y-2">
-            <p>Mogelijke oplossingen:</p>
-            <ul className="text-left space-y-1 list-disc list-inside">
-              <li>Controleer of de link nog geldig is (links verlopen na 24 uur)</li>
-              <li>Probeer opnieuw te registreren met hetzelfde e-mailadres</li>
-              <li>Controleer uw spam-map voor nieuwe verificatie-e-mails</li>
-            </ul>
-          </div>
+          <Alert className="border-amber-200 bg-amber-50 text-left">
+            <RefreshCw className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <p className="font-medium mb-2">Mogelijke oplossingen:</p>
+              <ul className="space-y-1 list-disc list-inside text-sm">
+                <li>Controleer of de link nog geldig is (links verlopen na 24 uur)</li>
+                <li>Probeer opnieuw te registreren met hetzelfde e-mailadres</li>
+                <li>Controleer uw spam-map voor nieuwe verificatie-e-mails</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
 
-          <Button
-            onClick={() => router.push('/auth')}
-            className="w-full"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Terug naar inloggen
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={() => router.push('/auth')}
+              className="w-full"
+            >
+              Nieuwe poging
+            </Button>
+
+            <Button
+              onClick={() => router.push('/auth')}
+              variant="outline"
+              className="w-full"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Terug naar inloggen
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

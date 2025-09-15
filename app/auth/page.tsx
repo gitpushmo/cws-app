@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { CheckCircle } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
@@ -41,7 +42,7 @@ export default function AuthPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const supabase = createClient()
+  // const supabase = createClient() // Currently using API endpoints instead
 
   useEffect(() => {
     // Show success message if coming from email verification
@@ -294,18 +295,24 @@ export default function AuthPage() {
               />
 
               {message && (
-                <div className={`text-sm p-3 rounded flex items-center gap-2 ${
-                  message.includes('succesvol geverifieerd')
-                    ? 'bg-green-50 text-green-800'
-                    : message.includes('aangemaakt')
-                    ? 'bg-green-50 text-green-800'
-                    : 'bg-red-50 text-red-800'
+                <Alert className={`${
+                  message.includes('succesvol geverifieerd') || message.includes('aangemaakt')
+                    ? 'border-green-200 bg-green-50'
+                    : 'border-red-200 bg-red-50'
                 }`}>
-                  {message.includes('succesvol geverifieerd') && (
-                    <CheckCircle className="w-4 h-4" />
+                  {message.includes('succesvol geverifieerd') || message.includes('aangemaakt') ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
                   )}
-                  {message}
-                </div>
+                  <AlertDescription className={`${
+                    message.includes('succesvol geverifieerd') || message.includes('aangemaakt')
+                      ? 'text-green-800'
+                      : 'text-red-800'
+                  }`}>
+                    {message}
+                  </AlertDescription>
+                </Alert>
               )}
 
               <Button
@@ -313,7 +320,14 @@ export default function AuthPage() {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? 'Bezig...' : (isLogin ? 'Inloggen' : 'Registreren')}
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isLogin ? 'Bezig met inloggen...' : 'Account wordt aangemaakt...'}
+                  </>
+                ) : (
+                  isLogin ? 'Inloggen' : 'Registreren'
+                )}
               </Button>
             </form>
           </Form>
