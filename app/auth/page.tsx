@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
@@ -39,6 +39,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -48,6 +49,11 @@ export default function AuthPage() {
     // Show success message if coming from email verification
     if (searchParams.get('verified') === 'true') {
       setMessage('E-mail succesvol geverifieerd! U kunt nu inloggen.')
+    }
+
+    // Show success message if coming from password update
+    if (searchParams.get('updated') === 'true') {
+      setMessage('Wachtwoord succesvol bijgewerkt! U kunt nu inloggen met uw nieuwe wachtwoord.')
     }
 
     // Show error message if profile not found
@@ -283,11 +289,26 @@ export default function AuthPage() {
                   <FormItem>
                     <FormLabel>Wachtwoord</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -296,17 +317,17 @@ export default function AuthPage() {
 
               {message && (
                 <Alert className={`${
-                  message.includes('succesvol geverifieerd') || message.includes('aangemaakt')
+                  message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt')
                     ? 'border-green-200 bg-green-50'
                     : 'border-red-200 bg-red-50'
                 }`}>
-                  {message.includes('succesvol geverifieerd') || message.includes('aangemaakt') ? (
+                  {message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt') ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   ) : (
                     <AlertCircle className="h-4 w-4 text-red-600" />
                   )}
                   <AlertDescription className={`${
-                    message.includes('succesvol geverifieerd') || message.includes('aangemaakt')
+                    message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt')
                       ? 'text-green-800'
                       : 'text-red-800'
                   }`}>
@@ -339,6 +360,7 @@ export default function AuthPage() {
                 setIsLogin(!isLogin)
                 form.reset()
                 setMessage('')
+                setShowPassword(false)
               }}
               className="text-sm text-blue-600 hover:underline block w-full"
             >

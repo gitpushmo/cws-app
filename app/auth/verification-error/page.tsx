@@ -1,15 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react'
+import { AlertCircle, ArrowLeft, RefreshCw, Loader2, CheckCircle, Mail } from 'lucide-react'
 
 export default function VerificationErrorPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const error = searchParams.get('error')
+  const [email, setEmail] = useState('')
+  const [isResending, setIsResending] = useState(false)
+  const [resendMessage, setResendMessage] = useState('')
+  const [showEmailInput, setShowEmailInput] = useState(false)
 
   const getErrorMessage = (errorType: string | null) => {
     switch (errorType) {
@@ -38,6 +44,40 @@ export default function VerificationErrorPage() {
 
   const errorInfo = getErrorMessage(error)
 
+  const handleResendVerification = async () => {
+    if (!email || !email.includes('@')) {
+      setResendMessage('Voer een geldig e-mailadres in')
+      return
+    }
+
+    setIsResending(true)
+    setResendMessage('')
+
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setResendMessage('Nieuwe verificatie-e-mail verzonden!')
+        setShowEmailInput(false)
+        setEmail('')
+      } else {
+        setResendMessage(result.error || 'Er is iets fout gegaan. Probeer het opnieuw.')
+      }
+    } catch {
+      setResendMessage('Er is iets fout gegaan. Probeer het opnieuw.')
+    } finally {
+      setIsResending(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
@@ -64,6 +104,49 @@ export default function VerificationErrorPage() {
             </AlertDescription>
           </Alert>
 
+          {/* Email input for resend verification */}
+          {showEmailInput && (
+            <div className="space-y-3 text-left">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                E-mailadres voor nieuwe verificatie-e-mail:
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="uw@email.nl"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleResendVerification()
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {/* Resend message */}
+          {resendMessage && (
+            <Alert className={`${
+              resendMessage.includes('verzonden')
+                ? 'border-green-200 bg-green-50'
+                : 'border-red-200 bg-red-50'
+            }`}>
+              {resendMessage.includes('verzonden') ? (
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              )}
+              <AlertDescription className={`${
+                resendMessage.includes('verzonden')
+                  ? 'text-green-800'
+                  : 'text-red-800'
+              }`}>
+                {resendMessage}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-2">
             {error === 'recovery_failed' ? (
               <>
@@ -85,11 +168,50 @@ export default function VerificationErrorPage() {
               </>
             ) : (
               <>
+                {!showEmailInput ? (
+                  <Button
+                    onClick={() => setShowEmailInput(true)}
+                    className="w-full"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Nieuwe verificatie aanvragen
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handleResendVerification}
+                      className="w-full"
+                      disabled={isResending || !email}
+                    >
+                      {isResending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Bezig met verzenden...
+                        </>
+                      ) : (
+                        'Verstuur verificatie-e-mail'
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowEmailInput(false)
+                        setEmail('')
+                        setResendMessage('')
+                      }}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Annuleren
+                    </Button>
+                  </div>
+                )}
+
                 <Button
-                  onClick={() => router.push('/auth')}
+                  onClick={() => router.push('/auth/reset-password')}
+                  variant="outline"
                   className="w-full"
                 >
-                  Nieuwe poging
+                  Wachtwoord reset aanvragen
                 </Button>
 
                 <Button

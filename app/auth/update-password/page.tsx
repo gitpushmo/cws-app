@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 const updatePasswordSchema = z.object({
   password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
@@ -31,7 +30,6 @@ export default function UpdatePasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = createClient()
 
   const form = useForm<UpdatePasswordForm>({
     resolver: zodResolver(updatePasswordSchema),
@@ -42,39 +40,55 @@ export default function UpdatePasswordPage() {
   })
 
   useEffect(() => {
-    // Check if user is authenticated (should be if they came from reset link)
-    const checkAuth = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
+    // Check if required tokens are present in URL
+    const accessToken = searchParams.get('access_token')
+    const refreshToken = searchParams.get('refresh_token')
 
-      if (error || !user) {
-        setMessage('Ongeldige of verlopen reset link. Probeer opnieuw een reset aan te vragen.')
-        return
-      }
+    if (!accessToken || !refreshToken) {
+      setMessage('Ongeldige of verlopen reset link. Probeer opnieuw een reset aan te vragen.')
     }
-
-    checkAuth()
-  }, [supabase])
+  }, [searchParams])
 
   async function onSubmit(values: UpdatePasswordForm) {
     setLoading(true)
     setMessage('')
 
+    // Get tokens from URL parameters
+    const accessToken = searchParams.get('access_token')
+    const refreshToken = searchParams.get('refresh_token')
+
+    if (!accessToken || !refreshToken) {
+      setMessage('Ongeldige of verlopen reset sessie. Vraag een nieuwe wachtwoord reset aan.')
+      setLoading(false)
+      return
+    }
+
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: values.password
+      const response = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: values.password,
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        }),
       })
 
-      if (error) {
-        setMessage(error.message)
+      const result = await response.json()
+
+      if (!response.ok) {
+        setMessage(result.error)
         return
       }
 
       setSuccess(true)
-      setMessage('Wachtwoord succesvol bijgewerkt! U wordt doorgestuurd naar uw account.')
+      setMessage(result.message || 'Wachtwoord succesvol bijgewerkt! U wordt doorgestuurd naar inloggen.')
 
-      // Redirect to dashboard after success
+      // Redirect to login after success
       setTimeout(() => {
-        router.push('/')
+        router.push('/auth?updated=true')
       }, 2000)
     } catch (error) {
       console.error('Update password error:', error)

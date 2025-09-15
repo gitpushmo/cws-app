@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 const resetSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
@@ -24,7 +23,6 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const form = useForm<ResetForm>({
     resolver: zodResolver(resetSchema),
@@ -38,17 +36,25 @@ export default function ResetPasswordPage() {
     setMessage('')
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email,
+        }),
       })
 
-      if (error) {
-        setMessage(error.message)
+      const result = await response.json()
+
+      if (!response.ok) {
+        setMessage(result.error)
         return
       }
 
       setSuccess(true)
-      setMessage(`We hebben een wachtwoord reset link gestuurd naar ${values.email}. Controleer uw e-mail.`)
+      setMessage(result.message || `We hebben een wachtwoord reset link gestuurd naar ${values.email}. Controleer uw e-mail.`)
     } catch (error) {
       console.error('Reset password error:', error)
       setMessage('Er is iets fout gegaan. Probeer het opnieuw.')
