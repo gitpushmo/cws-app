@@ -18,10 +18,15 @@ export default function VerificationErrorPage() {
           title: 'Verificatie mislukt',
           description: 'De verificatielink is ongeldig of verlopen. Probeer opnieuw in te loggen of een nieuwe account aan te maken.'
         }
+      case 'recovery_failed':
+        return {
+          title: 'Wachtwoord reset mislukt',
+          description: 'De wachtwoord reset link is ongeldig of verlopen. Probeer opnieuw een wachtwoord reset aan te vragen.'
+        }
       case 'invalid_link':
         return {
           title: 'Ongeldige link',
-          description: 'De verificatielink is niet correct. Controleer of u de juiste link heeft gebruikt uit uw e-mail.'
+          description: 'De link is niet correct. Controleer of u de juiste link heeft gebruikt uit uw e-mail.'
         }
       default:
         return {
@@ -60,21 +65,43 @@ export default function VerificationErrorPage() {
           </Alert>
 
           <div className="space-y-2">
-            <Button
-              onClick={() => router.push('/auth')}
-              className="w-full"
-            >
-              Nieuwe poging
-            </Button>
+            {error === 'recovery_failed' ? (
+              <>
+                <Button
+                  onClick={() => router.push('/auth/reset-password')}
+                  className="w-full"
+                >
+                  Nieuwe reset aanvragen
+                </Button>
 
-            <Button
-              onClick={() => router.push('/auth')}
-              variant="outline"
-              className="w-full"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Terug naar inloggen
-            </Button>
+                <Button
+                  onClick={() => router.push('/auth')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Terug naar inloggen
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={() => router.push('/auth')}
+                  className="w-full"
+                >
+                  Nieuwe poging
+                </Button>
+
+                <Button
+                  onClick={() => router.push('/auth')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Terug naar inloggen
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

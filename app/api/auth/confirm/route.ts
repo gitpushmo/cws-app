@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const token_hash = searchParams.get('token_hash')
-  const type = searchParams.get('type') as 'email' | 'signup' | null
+  const type = searchParams.get('type') as 'email' | 'signup' | 'recovery' | null
   const next = searchParams.get('next') ?? '/'
 
   const redirectTo = request.nextUrl.clone()
@@ -16,27 +16,79 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const supabase = await createClient()
 
-    const { error } = await supabase.auth.verifyOtp({
-      type,
-      token_hash,
-    })
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        type,
+        token_hash,
+      })
 
-    if (!error) {
-      // Get the user to ensure session is established
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (!error) {
+        // Handle different verification types
+        if (type === 'recovery') {
+          // Password reset verification successful - redirect to update password page
+          redirectTo.pathname = '/auth/update-password'
+          return NextResponse.redirect(redirectTo)
+        } else {
+          // Email verification successful - redirect to auth page with success message
+          redirectTo.pathname = '/auth'
+          redirectTo.searchParams.set('verified', 'true')
+          return NextResponse.redirect(redirectTo)
+        }
+      }
 
-      if (!userError && user) {
-        // Email verification successful - redirect to auth page with success message
+      // Log the error for debugging but still check if user is authenticated
+      console.error('Verification error:', error)
+
+      // For password reset, don't try to recover from errors
+      if (type === 'recovery') {
+        redirectTo.pathname = '/auth/verification-error'
+        redirectTo.searchParams.set('error', 'recovery_failed')
+        return NextResponse.redirect(redirectTo)
+      }
+
+      // Sometimes verification "fails" but user is actually authenticated
+      // Check if user is authenticated anyway
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user && user.email_confirmed_at) {
+        // User is authenticated and verified, treat as success
         redirectTo.pathname = '/auth'
         redirectTo.searchParams.set('verified', 'true')
         return NextResponse.redirect(redirectTo)
       }
-    }
 
-    // Verification failed
-    redirectTo.pathname = '/auth/verification-error'
-    redirectTo.searchParams.set('error', 'verification_failed')
-    return NextResponse.redirect(redirectTo)
+      // Verification truly failed
+      redirectTo.pathname = '/auth/verification-error'
+      redirectTo.searchParams.set('error', 'verification_failed')
+      return NextResponse.redirect(redirectTo)
+
+    } catch (error) {
+      console.error('Unexpected verification error:', error)
+
+      // For password reset, don't try to recover from errors
+      if (type === 'recovery') {
+        redirectTo.pathname = '/auth/verification-error'
+        redirectTo.searchParams.set('error', 'recovery_failed')
+        return NextResponse.redirect(redirectTo)
+      }
+
+      // Check if user is authenticated despite the error
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (user && user.email_confirmed_at) {
+          redirectTo.pathname = '/auth'
+          redirectTo.searchParams.set('verified', 'true')
+          return NextResponse.redirect(redirectTo)
+        }
+      } catch {
+        // Ignore nested error
+      }
+
+      redirectTo.pathname = '/auth/verification-error'
+      redirectTo.searchParams.set('error', 'verification_failed')
+      return NextResponse.redirect(redirectTo)
+    }
   }
 
   // Missing parameters

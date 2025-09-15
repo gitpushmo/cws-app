@@ -332,7 +332,7 @@ export default function AuthPage() {
             </form>
           </Form>
 
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-2">
             <button
               type="button"
               onClick={() => {
@@ -340,13 +340,23 @@ export default function AuthPage() {
                 form.reset()
                 setMessage('')
               }}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 hover:underline block w-full"
             >
               {isLogin
                 ? 'Nog geen account? Registreer hier'
                 : 'Al een account? Log hier in'
               }
             </button>
+
+            {isLogin && (
+              <button
+                type="button"
+                onClick={() => router.push('/auth/reset-password')}
+                className="text-sm text-gray-600 hover:underline block w-full"
+              >
+                Wachtwoord vergeten?
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>
