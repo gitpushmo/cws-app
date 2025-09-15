@@ -20,11 +20,17 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Wachtwoord moet minimaal 6 tekens zijn'),
   name: z.string().min(2, 'Naam moet minimaal 2 tekens zijn'),
   phone: z.string().min(10, 'Telefoonnummer moet minimaal 10 tekens zijn'),
+  company_name: z.string().optional(),
+  // Invoice address (required)
+  invoice_street: z.string().min(1, 'Straat is verplicht'),
+  invoice_city: z.string().min(1, 'Stad is verplicht'),
+  invoice_postal_code: z.string().min(1, 'Postcode is verplicht'),
+  invoice_country: z.string().min(1, 'Land is verplicht'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
 type RegisterForm = z.infer<typeof registerSchema>
-type AuthForm = LoginForm & Partial<Pick<RegisterForm, 'name' | 'phone'>>
+type AuthForm = LoginForm & Partial<Pick<RegisterForm, 'name' | 'phone' | 'company_name' | 'invoice_street' | 'invoice_city' | 'invoice_postal_code' | 'invoice_country'>>
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -40,6 +46,11 @@ export default function AuthPage() {
       password: '',
       name: '',
       phone: '',
+      company_name: '',
+      invoice_street: '',
+      invoice_city: '',
+      invoice_postal_code: '',
+      invoice_country: '',
     },
   })
 
@@ -76,7 +87,13 @@ export default function AuthPage() {
             data: {
               name: values.name || '',
               phone: values.phone || '',
-              shipping_address: {} // Empty shipping address for now
+              company_name: values.company_name || '',
+              invoice_address: {
+                street: values.invoice_street || '',
+                city: values.invoice_city || '',
+                postal_code: values.invoice_postal_code || '',
+                country: values.invoice_country || ''
+              }
             }
           }
         })
@@ -148,6 +165,78 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="company_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bedrijfsnaam (optioneel)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Uw bedrijfsnaam" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">Factuuradres (verplicht)</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <FormField
+                        control={form.control}
+                        name="invoice_street"
+                        render={({ field }) => (
+                          <FormItem className="col-span-2">
+                            <FormLabel>Straat + huisnummer</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Hoofdstraat 123" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="invoice_postal_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Postcode</FormLabel>
+                            <FormControl>
+                              <Input placeholder="1234 AB" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="invoice_city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stad</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Amsterdam" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="invoice_country"
+                        render={({ field }) => (
+                          <FormItem className="col-span-2">
+                            <FormLabel>Land</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nederland" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </>
               )}
 

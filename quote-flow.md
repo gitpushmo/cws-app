@@ -12,8 +12,7 @@
 - Phone (required)
 - Email (required)
 - Company name (optional)
-- Invoice address (optional)
-- Shipping address (required)
+- Invoice address (required)
 
 ## Quote Entity Structure
 
@@ -68,6 +67,7 @@ pending → needs attention ↻ (unlimited)
    - Upload DXF files (required)
    - Upload PDF technical drawings (required)
    - Set quantity per DXF file
+   - Provide shipping address for this quote (required)
    - Add notes/deadline (optional)
    - System auto-creates LineItems from DXF files
    - Quote assigned number (Q00001) and enters "pending" status

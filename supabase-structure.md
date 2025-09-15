@@ -42,8 +42,7 @@ create table public.profiles (
   phone text not null,
   email text not null,
   company_name text,
-  invoice_address jsonb, -- {street, city, postal_code, country}
-  shipping_address jsonb not null, -- {street, city, postal_code, country}
+  invoice_address jsonb not null, -- {street, city, postal_code, country} - stable billing address
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -71,6 +70,7 @@ create table public.quotes (
   status public.quote_status default 'pending',
   notes text,
   deadline timestamptz,
+  shipping_address jsonb not null, -- {street, city, postal_code, country} - per-quote delivery address
   total_cutting_price decimal(10, 2),
   total_customer_price decimal(10, 2),
   production_time_hours decimal(10, 2),
@@ -822,14 +822,20 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.profiles (id, role, name, phone, email, shipping_address)
+  insert into public.profiles (id, role, name, phone, email, company_name, invoice_address)
   values (
     new.id,
     'customer',
     coalesce(new.raw_user_meta_data->>'name', ''),
     coalesce(new.raw_user_meta_data->>'phone', ''),
     new.email,
-    coalesce(new.raw_user_meta_data->'shipping_address', '{}'::jsonb)
+    coalesce(new.raw_user_meta_data->>'company_name', null),
+    coalesce(new.raw_user_meta_data->'invoice_address', '{
+      "street": "To be provided",
+      "city": "To be provided",
+      "postal_code": "To be provided",
+      "country": "NL"
+    }'::jsonb)
   );
   return new;
 end;

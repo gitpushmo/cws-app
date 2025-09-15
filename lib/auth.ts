@@ -5,8 +5,7 @@ export interface UserProfile {
   phone: string
   role: 'customer' | 'operator' | 'admin'
   company_name?: string
-  invoice_address?: Record<string, unknown>
-  shipping_address: Record<string, unknown>
+  invoice_address: Record<string, unknown>
   created_at: string
   updated_at: string
 }

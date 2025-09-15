@@ -1,0 +1,1 @@
+- Supabase structure is already implemented, always ask me before making changes in Supabase
