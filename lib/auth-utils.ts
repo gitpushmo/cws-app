@@ -24,6 +24,15 @@ export const authErrorMessages: AuthErrorMapping = {
   'Invalid token': 'Ongeldige verificatielink. Controleer of u de juiste link heeft gebruikt.',
   'Email already confirmed': 'E-mail is al bevestigd. U kunt inloggen.',
 
+  // PKCE-specific errors
+  'token_hash_not_found': 'Ongeldige verificatietoken. Controleer of u de juiste link uit uw e-mail gebruikt.',
+  'invalid_token_hash': 'Ongeldige verificatietoken. Controleer of u de juiste link uit uw e-mail gebruikt.',
+  'token_expired': 'Verificatietoken is verlopen. Vraag een nieuwe link aan.',
+  'already_used': 'Deze verificatielink is al gebruikt. Probeer in te loggen.',
+  'token_used': 'Deze verificatielink is al gebruikt. Probeer in te loggen.',
+  'code_challenge': 'Verificatiefout. Probeer opnieuw via een nieuwe link uit uw e-mail.',
+  'pkce': 'Verificatiefout. Probeer opnieuw via een nieuwe link uit uw e-mail.',
+
   // Session errors
   'Session not found': 'Sessie niet gevonden. Log opnieuw in.',
   'Session expired': 'Sessie verlopen. Log opnieuw in.',

@@ -34,6 +34,41 @@ export default function VerificationErrorPage() {
           title: 'Ongeldige link',
           description: 'De link is niet correct. Controleer of u de juiste link heeft gebruikt uit uw e-mail.'
         }
+      case 'invalid_type':
+        return {
+          title: 'Ongeldig verificatietype',
+          description: 'De verificatielink heeft een ongeldig type. Gebruik de link direct uit uw e-mail.'
+        }
+      case 'invalid_token_hash':
+        return {
+          title: 'Ongeldige verificatietoken',
+          description: 'De verificatietoken in de link is ongeldig. Controleer of u de complete link gebruikt uit uw e-mail.'
+        }
+      case 'verification_expired':
+        return {
+          title: 'Verificatielink verlopen',
+          description: 'De verificatielink is verlopen. Probeer opnieuw te registreren of vraag een nieuwe verificatielink aan.'
+        }
+      case 'recovery_expired':
+        return {
+          title: 'Wachtwoord reset link verlopen',
+          description: 'De wachtwoord reset link is verlopen. Vraag een nieuwe wachtwoord reset aan.'
+        }
+      case 'token_already_used':
+        return {
+          title: 'Link al gebruikt',
+          description: 'Deze verificatielink is al gebruikt. Probeer in te loggen of vraag een nieuwe link aan als dat niet lukt.'
+        }
+      case 'invalid_token':
+        return {
+          title: 'Ongeldige token',
+          description: 'De verificatietoken is ongeldig of beschadigd. Zorg dat u de complete link kopieert uit uw e-mail.'
+        }
+      case 'pkce_error':
+        return {
+          title: 'Verificatiefout',
+          description: 'Er is een technische fout opgetreden bij de verificatie. Probeer opnieuw via een nieuwe link uit uw e-mail.'
+        }
       default:
         return {
           title: 'Verificatiefout',

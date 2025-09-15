@@ -37,6 +37,11 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
 
   try {
+    console.log('Password update attempt with token lengths:', {
+      access_token: access_token.length,
+      refresh_token: refresh_token.length
+    })
+
     // Set the session first using the tokens from the reset link
     const { error: sessionError } = await supabase.auth.setSession({
       access_token,
@@ -44,12 +49,14 @@ export async function POST(request: NextRequest) {
     })
 
     if (sessionError) {
-      console.error('Session error during password update:', sessionError)
+      console.error('Session error during password update:', sessionError.message)
       return NextResponse.json(
         { error: 'Ongeldige of verlopen reset sessie. Vraag een nieuwe wachtwoord reset aan.' },
         { status: 401 }
       )
     }
+
+    console.log('Session successfully set for password update')
 
     // Update the password
     const { data, error } = await supabase.auth.updateUser({
