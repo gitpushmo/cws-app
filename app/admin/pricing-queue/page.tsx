@@ -189,7 +189,7 @@ export default async function AdminPricingQueuePage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Link href={`/admin/quote/${quote.id}/pricing`}>
+                        <Link href={`/admin/quotes/${quote.id}/pricing`}>
                           <Button size="sm">
                             Prijs Instellen
                           </Button>

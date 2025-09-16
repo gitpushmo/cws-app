@@ -59,7 +59,7 @@ export default async function KlantDashboard() {
             </CardHeader>
             <CardContent>
               <Button className="w-full" asChild>
-                <Link href="/klant/offerte/nieuw">
+                <Link href="/klant/quote/new">
                   Offerte Aanvragen
                 </Link>
               </Button>
@@ -89,7 +89,7 @@ export default async function KlantDashboard() {
             </CardHeader>
             <CardContent>
               <Button variant="outline" className="w-full" asChild>
-                <Link href="/klant/bestellingen">
+                <Link href="/klant/orders">
                   Orders Bekijken
                 </Link>
               </Button>

@@ -142,7 +142,7 @@ export default async function CustomerOrdersPage() {
                   U heeft nog geen bestellingen geplaatst.
                 </p>
                 <Button asChild>
-                  <Link href="/klant/offerte/nieuw">
+                  <Link href="/klant/quote/new">
                     Vraag een Offerte Aan
                   </Link>
                 </Button>
@@ -169,7 +169,7 @@ export default async function CustomerOrdersPage() {
                           {order.order_number}
                         </TableCell>
                         <TableCell>
-                          <Link href={`/klant/offerte/${order.quote_id}`} className="text-blue-600 hover:underline">
+                          <Link href={`/klant/quote/${order.quote_id}`} className="text-blue-600 hover:underline">
                             {order.quotes?.quote_number}
                           </Link>
                         </TableCell>
@@ -196,7 +196,7 @@ export default async function CustomerOrdersPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Link href={`/klant/offerte/${order.quote_id}`}>
+                          <Link href={`/klant/quote/${order.quote_id}`}>
                             <Button size="sm" variant="outline">
                               <Eye className="h-4 w-4 mr-1" />
                               Bekijk

@@ -200,7 +200,7 @@ export default async function AcceptedQuotesPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Link href={`/admin/quote/${quote.id}`}>
+                            <Link href={`/admin/quotes/${quote.id}`}>
                               <Button size="sm" variant="outline">
                                 Details
                               </Button>

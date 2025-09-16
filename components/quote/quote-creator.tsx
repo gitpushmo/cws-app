@@ -166,12 +166,12 @@ export default function QuoteCreator() {
 
       if (uploadSuccess) {
         // Redirect to quote detail or success page
-        router.push(`/klant/offerte/${quote.id}`)
+        router.push(`/klant/quote/${quote.id}`)
       } else {
         setSubmitError('Offerte aangemaakt, maar niet alle bestanden zijn geüpload. U kunt deze later toevoegen.')
         // Still redirect after a delay
         setTimeout(() => {
-          router.push(`/klant/offerte/${quote.id}`)
+          router.push(`/klant/quote/${quote.id}`)
         }, 3000)
       }
 

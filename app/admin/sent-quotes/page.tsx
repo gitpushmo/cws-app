@@ -187,7 +187,7 @@ export default async function SentQuotesPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Link href={`/admin/quote/${quote.id}`}>
+                            <Link href={`/admin/quotes/${quote.id}`}>
                               <Button size="sm" variant="outline">
                                 Details
                               </Button>

@@ -42,16 +42,16 @@ cws-app/
 │   │   ├── offerte/
 │   │   │   ├── nieuw/         # Create quote
 │   │   │   └── [id]/          # View/edit quote
-│   │   └── bestellingen/      # Orders
+│   │   └── orders/           # Orders
 │   ├── operator/              # Operator dashboard
 │   │   ├── page.tsx           # Pending quotes
 │   │   ├── offerte/[id]/      # Process quote
 │   │   └── productie/         # Production queue
 │   ├── admin/                 # Admin dashboard
 │   │   ├── page.tsx           # Overview
-│   │   ├── offertes/          # All quotes
-│   │   ├── prijzen/           # Pricing management
-│   │   └── materialen/        # Materials CRUD
+│   │   ├── quotes/           # All quotes
+│   │   ├── pricing/          # Pricing management
+│   │   └── materials/        # Materials CRUD
 │   └── api/
 │       ├── quotes/            # Quote endpoints
 │       ├── files/             # File handling
@@ -374,7 +374,7 @@ const handleSubmit = async (data: QuoteFormData) => {
   try {
     setIsSubmitting(true)
     const result = await createQuote(data)
-    router.push(`/klant/offerte/${result.id}`)
+    router.push(`/klant/quote/${result.id}`)
   } catch (error) {
     if (error instanceof ValidationError) {
       setFormError(error.message)

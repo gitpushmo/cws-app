@@ -254,7 +254,7 @@ export default async function AdminAllQuotesPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Link href={`/admin/quote/${quote.id}`}>
+                            <Link href={`/admin/quotes/${quote.id}`}>
                               <Button size="sm" variant="outline">
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -301,7 +301,7 @@ export default async function AdminAllQuotesPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href="/admin/materialen">
+                <Link href="/admin/materials">
                   Materialen Beheren
                 </Link>
               </Button>
