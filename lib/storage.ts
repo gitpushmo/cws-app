@@ -1,4 +1,4 @@
-import { supabase } from './supabase/client';
+import { createClient } from './supabase/client';
 
 export interface FileUploadResult {
   success: boolean;
@@ -17,6 +17,7 @@ export async function uploadFile(
   quoteId: string
 ): Promise<FileUploadResult> {
   try {
+    const supabase = createClient()
     const fileExtension = file.name.split('.').pop();
     const timestamp = Date.now();
     const fileName = `${file.name.replace(/\.[^/.]+$/, '')}_${timestamp}.${fileExtension}`;
@@ -61,6 +62,7 @@ export async function getSignedUrl(
   expiresIn: number = 3600 // 1 hour default
 ): Promise<{ url?: string; error?: string }> {
   try {
+    const supabase = createClient()
     const { data, error } = await supabase.storage
       .from(bucket)
       .createSignedUrl(path, expiresIn);
@@ -83,6 +85,7 @@ export async function listFilesForQuote(
   quoteId: string
 ) {
   try {
+    const supabase = createClient()
     const { data, error } = await supabase.storage
       .from(bucket)
       .list(quoteId, {
@@ -111,6 +114,7 @@ export async function deleteFile(
   path: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const supabase = createClient()
     const { error } = await supabase.storage
       .from(bucket)
       .remove([path]);
