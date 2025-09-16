@@ -59,7 +59,7 @@ export default async function KlantDashboard() {
             </CardHeader>
             <CardContent>
               <Button className="w-full" asChild>
-                <Link href="/klant/quote/new">
+                <Link href="/klant/quotes/new">
                   Offerte Aanvragen
                 </Link>
               </Button>

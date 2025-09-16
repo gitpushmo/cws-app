@@ -168,7 +168,7 @@ export default async function OperatorQueuePage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Link href={`/operator/quote/${quote.id}`}>
+                        <Link href={`/operator/quotes/${quote.id}`}>
                           <Button size="sm">
                             Beoordeel
                           </Button>

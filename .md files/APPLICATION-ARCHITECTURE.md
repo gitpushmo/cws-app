@@ -374,7 +374,7 @@ const handleSubmit = async (data: QuoteFormData) => {
   try {
     setIsSubmitting(true)
     const result = await createQuote(data)
-    router.push(`/klant/quote/${result.id}`)
+    router.push(`/klant/quotes/${result.id}`)
   } catch (error) {
     if (error instanceof ValidationError) {
       setFormError(error.message)

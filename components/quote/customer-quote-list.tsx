@@ -137,7 +137,7 @@ export default function CustomerQuoteList() {
             </CardDescription>
           </div>
           <Button asChild>
-            <Link href="/klant/quote/new">
+            <Link href="/klant/quotes/new">
               <Plus className="h-4 w-4 mr-2" />
               Nieuwe Offerte
             </Link>
@@ -149,7 +149,7 @@ export default function CustomerQuoteList() {
           <div className="text-center py-8">
             <p className="text-gray-600 mb-4">Nog geen offertes aangevraagd</p>
             <Button asChild>
-              <Link href="/klant/quote/new">
+              <Link href="/klant/quotes/new">
                 <Plus className="h-4 w-4 mr-2" />
                 Eerste Offerte Aanvragen
               </Link>
@@ -190,7 +190,7 @@ export default function CustomerQuoteList() {
                         variant="outline"
                         asChild
                       >
-                        <Link href={`/klant/quote/${quote.id}`}>
+                        <Link href={`/klant/quotes/${quote.id}`}>
                           <Eye className="h-4 w-4 mr-2" />
                           Bekijken
                         </Link>
