@@ -106,7 +106,7 @@ export default async function OperatorDashboard() {
               <div className="text-3xl font-bold text-orange-600 mb-2">
                 {inProgressCount}
               </div>
-              <Link href="/operator/in-progress">
+              <Link href="/operator/queue">
                 <Button variant="outline" className="w-full" disabled={inProgressCount === 0}>
                   Doorgaan met Werk
                 </Button>
@@ -125,7 +125,7 @@ export default async function OperatorDashboard() {
               <div className="text-3xl font-bold text-green-600 mb-2">
                 {readyCount}
               </div>
-              <Link href="/operator/ready">
+              <Link href="/operator/queue">
                 <Button variant="outline" className="w-full" disabled={readyCount === 0}>
                   Bekijk Gereed
                 </Button>

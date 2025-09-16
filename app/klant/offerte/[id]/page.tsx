@@ -3,8 +3,10 @@ import { redirect, notFound } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Download, FileText, Image } from 'lucide-react'
+import { ArrowLeft, FileText, Image } from 'lucide-react'
 import Link from 'next/link'
+import FileDownloadButton from '@/components/quote/file-download-button'
+import CommentThread from '@/components/quote/comment-thread'
 
 interface QuoteParams {
   id: string
@@ -129,25 +131,6 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
   }
 
 
-  const handleFileDownload = async (fileUrl: string, fileName: string) => {
-    try {
-      // Get signed URL for download
-      const response = await fetch(fileUrl)
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = fileName
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      }
-    } catch (error) {
-      console.error('Error downloading file:', error)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -237,14 +220,10 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
                               </div>
                             </div>
                             {item.dxf_file_url && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleFileDownload(item.dxf_file_url!, item.dxf_file_name!)}
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                Download
-                              </Button>
+                              <FileDownloadButton
+                                fileUrl={item.dxf_file_url}
+                                fileName={item.dxf_file_name}
+                              />
                             )}
                           </div>
                         )}
@@ -260,14 +239,10 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
                               </div>
                             </div>
                             {item.pdf_file_url && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleFileDownload(item.pdf_file_url!, item.pdf_file_name!)}
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                Download
-                              </Button>
+                              <FileDownloadButton
+                                fileUrl={item.pdf_file_url}
+                                fileName={item.pdf_file_name}
+                              />
                             )}
                           </div>
                         )}
@@ -277,6 +252,12 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
                 )}
               </CardContent>
             </Card>
+
+            {/* Comments Thread */}
+            <CommentThread
+              quoteId={quote.id.toString()}
+              userRole={profile.role as 'customer' | 'operator' | 'admin'}
+            />
           </div>
 
           {/* Sidebar */}

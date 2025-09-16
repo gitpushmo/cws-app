@@ -1,4 +1,4 @@
-import { AuthError } from '@supabase/supabase-js'
+import { AuthError, User } from '@supabase/supabase-js'
 
 export interface AuthErrorMapping {
   [key: string]: string
@@ -92,8 +92,8 @@ export function isValidPassword(password: string): { valid: boolean; message?: s
 /**
  * Checks if user email is verified
  */
-export function isEmailVerified(user: any): boolean {
-  return user && user.email_confirmed_at !== null
+export function isEmailVerified(user: User | null): boolean {
+  return Boolean(user && user.email_confirmed_at !== null)
 }
 
 /**
@@ -109,7 +109,7 @@ export type AuthState =
 /**
  * Determines auth state based on user object
  */
-export function getAuthState(user: any, loading: boolean = false): AuthState {
+export function getAuthState(user: User | null, loading: boolean = false): AuthState {
   if (loading) return 'loading'
   if (!user) return 'unauthenticated'
   if (!isEmailVerified(user)) return 'pending_verification'
@@ -119,7 +119,13 @@ export function getAuthState(user: any, loading: boolean = false): AuthState {
 /**
  * Format user data for client response
  */
-export function formatUserResponse(user: any, profile?: any) {
+export function formatUserResponse(user: User, profile?: {
+  name?: string;
+  role?: string;
+  phone?: string;
+  company_name?: string;
+  invoice_address?: Record<string, unknown>;
+}) {
   return {
     id: user.id,
     email: user.email,
@@ -223,7 +229,7 @@ export function getRateLimitMessage(action: keyof typeof RATE_LIMITS, resetTime:
  */
 export function cleanupRateLimits(): void {
   const now = Date.now()
-  for (const [key, record] of rateLimitStore.entries()) {
+  for (const [key, record] of Array.from(rateLimitStore.entries())) {
     if (now > record.resetTime) {
       rateLimitStore.delete(key)
     }

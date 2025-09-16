@@ -125,7 +125,7 @@ export default function QuoteCreator() {
     return allUploadsSuccessful
   }
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: QuoteFormData) => {
     setSubmitError('')
     setIsSubmitting(true)
 

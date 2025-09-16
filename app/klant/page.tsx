@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import LogoutButton from '@/components/auth/logout-button'
 import CustomerQuoteList from '@/components/quote/customer-quote-list'
+import ScrollToButton from '@/components/ui/scroll-to-button'
 import Link from 'next/link'
 
 export default async function KlantDashboard() {
@@ -73,9 +74,9 @@ export default async function KlantDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full" onClick={() => document.querySelector('#quotes-list')?.scrollIntoView({ behavior: 'smooth' })}>
+              <ScrollToButton targetId="quotes-list" variant="outline" className="w-full">
                 Offertes Bekijken
-              </Button>
+              </ScrollToButton>
             </CardContent>
           </Card>
 
@@ -83,12 +84,14 @@ export default async function KlantDashboard() {
             <CardHeader>
               <CardTitle>Mijn Orders</CardTitle>
               <CardDescription>
-                Volg uw bestellingen (binnenkort beschikbaar)
+                Volg uw bestellingen
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full" disabled>
-                Orders Bekijken
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/klant/bestellingen">
+                  Orders Bekijken
+                </Link>
               </Button>
             </CardContent>
           </Card>

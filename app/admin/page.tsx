@@ -205,7 +205,7 @@ export default async function AdminDashboard() {
                       </div>
                     </div>
                   ))}
-                  <Link href="/admin/quote">
+                  <Link href="/admin/offertes">
                     <Button variant="outline" className="w-full mt-2">
                       Alle Offertes Bekijken
                     </Button>
