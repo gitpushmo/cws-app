@@ -19,7 +19,7 @@ interface Comment {
   profiles: {
     name: string
     role: string
-  }
+  } | null
 }
 
 interface CommentThreadProps {
@@ -114,6 +114,7 @@ export default function CommentThread({ quoteId, userRole }: CommentThreadProps)
       case 'admin': return 'destructive'
       case 'operator': return 'default'
       case 'customer': return 'secondary'
+      case 'unknown': return 'outline'
       default: return 'outline'
     }
   }
@@ -123,6 +124,7 @@ export default function CommentThread({ quoteId, userRole }: CommentThreadProps)
       case 'admin': return 'Admin'
       case 'operator': return 'Operator'
       case 'customer': return 'Klant'
+      case 'unknown': return 'Onbekend'
       default: return role
     }
   }
@@ -163,9 +165,11 @@ export default function CommentThread({ quoteId, userRole }: CommentThreadProps)
               <div key={comment.id} className="border rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{comment.profiles.name}</span>
-                    <Badge variant={getRoleBadgeColor(comment.profiles.role)} className="text-xs">
-                      {getRoleLabel(comment.profiles.role)}
+                    <span className="font-medium text-sm">
+                      {comment.profiles?.name || 'Onbekende gebruiker'}
+                    </span>
+                    <Badge variant={getRoleBadgeColor(comment.profiles?.role || 'unknown')} className="text-xs">
+                      {getRoleLabel(comment.profiles?.role || 'unknown')}
                     </Badge>
                     {comment.visibility === 'internal' && (
                       <Badge variant="outline" className="text-xs flex items-center gap-1">
