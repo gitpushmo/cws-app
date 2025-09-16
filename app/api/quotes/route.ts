@@ -247,8 +247,27 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get quotes - RLS will filter based on user role automatically
-    const { data: quotes, error } = await supabase
+    // Get user profile for role-based filtering
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: 'Gebruikersprofiel niet gevonden' },
+        { status: 404 }
+      )
+    }
+
+    // Parse query parameters
+    const { searchParams } = new URL(request.url)
+    const statusFilter = searchParams.get('status')
+    const assignedOnly = searchParams.get('assigned_only') === 'true'
+
+    // Build query
+    let query = supabase
       .from('quotes')
       .select(`
         id,
@@ -260,9 +279,34 @@ export async function GET(request: NextRequest) {
         created_at,
         updated_at,
         customer_id,
-        operator_id
+        operator_id,
+        total_cutting_price,
+        total_customer_price,
+        production_time_hours
       `)
-      .order('created_at', { ascending: false })
+
+    // Apply status filter
+    if (statusFilter) {
+      query = query.eq('status', statusFilter)
+    }
+
+    // Role-based filtering
+    if (profile.role === 'customer') {
+      // Customers only see their own quotes
+      query = query.eq('customer_id', user.id)
+    } else if (profile.role === 'operator') {
+      // Operators see all quotes, but can filter to assigned ones
+      if (assignedOnly) {
+        query = query.eq('operator_id', user.id)
+      }
+      // For operators, don't show customer pricing data
+      // (keeping the same query structure, just filtering the display)
+    }
+    // Admins see everything (no additional filtering)
+
+    query = query.order('created_at', { ascending: false })
+
+    const { data: quotes, error } = await query
 
     if (error) {
       console.error('Error fetching quotes:', error)
@@ -272,7 +316,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(quotes || [])
+    // Filter data based on role
+    let filteredQuotes = quotes || []
+    if (profile.role === 'operator') {
+      // Remove sensitive pricing data for operators
+      filteredQuotes = filteredQuotes.map(quote => ({
+        ...quote,
+        total_customer_price: undefined
+      }))
+    }
+
+    return NextResponse.json(filteredQuotes)
 
   } catch (error) {
     console.error('Unexpected error in GET /api/quotes:', error)
