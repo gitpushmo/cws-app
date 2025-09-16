@@ -21,7 +21,6 @@ type ResetForm = z.infer<typeof resetSchema>
 export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-  const [success, setSuccess] = useState(false)
   const router = useRouter()
 
   const form = useForm<ResetForm>({
@@ -53,56 +52,14 @@ export default function ResetPasswordPage() {
         return
       }
 
-      setSuccess(true)
-      setMessage(result.message || `We hebben een wachtwoord reset link gestuurd naar ${values.email}. Controleer uw e-mail.`)
+      // Redirect to check email page with recovery type
+      router.push(`/auth/check-email?email=${encodeURIComponent(values.email)}&type=recovery`)
     } catch (error) {
       console.error('Reset password error:', error)
       setMessage('Er is iets fout gegaan. Probeer het opnieuw.')
     } finally {
       setLoading(false)
     }
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <CardTitle className="text-green-800">E-mail verstuurd</CardTitle>
-            <CardDescription>
-              We hebben een wachtwoord reset link gestuurd naar uw e-mailadres.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="text-center space-y-4">
-            <Alert className="border-green-200 bg-green-50 text-left">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
-                <p className="font-medium mb-2">Volgende stappen:</p>
-                <ul className="space-y-1 list-disc list-inside text-sm">
-                  <li>Controleer uw e-mail inbox</li>
-                  <li>Klik op de reset link in de e-mail</li>
-                  <li>Voer uw nieuwe wachtwoord in</li>
-                  <li>Controleer ook uw spam-map</li>
-                </ul>
-              </AlertDescription>
-            </Alert>
-
-            <Button
-              onClick={() => router.push('/auth')}
-              variant="outline"
-              className="w-full"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Terug naar inloggen
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   return (
@@ -137,19 +94,9 @@ export default function ResetPasswordPage() {
               />
 
               {message && (
-                <Alert className={`${
-                  success
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-red-200 bg-red-50'
-                }`}>
-                  {success ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                  )}
-                  <AlertDescription className={`${
-                    success ? 'text-green-800' : 'text-red-800'
-                  }`}>
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
                     {message}
                   </AlertDescription>
                 </Alert>

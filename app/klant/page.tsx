@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import LogoutButton from '@/components/auth/logout-button'
+import CustomerQuoteList from '@/components/quote/customer-quote-list'
+import Link from 'next/link'
 
 export default async function KlantDashboard() {
   const supabase = await createClient()
@@ -46,7 +48,7 @@ export default async function KlantDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle>Nieuwe Offerte</CardTitle>
@@ -55,8 +57,10 @@ export default async function KlantDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">
-                Offerte Aanvragen
+              <Button className="w-full" asChild>
+                <Link href="/klant/offerte/nieuw">
+                  Offerte Aanvragen
+                </Link>
               </Button>
             </CardContent>
           </Card>
@@ -69,7 +73,7 @@ export default async function KlantDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => document.querySelector('#quotes-list')?.scrollIntoView({ behavior: 'smooth' })}>
                 Offertes Bekijken
               </Button>
             </CardContent>
@@ -79,28 +83,19 @@ export default async function KlantDashboard() {
             <CardHeader>
               <CardTitle>Mijn Orders</CardTitle>
               <CardDescription>
-                Volg uw bestellingen
+                Volg uw bestellingen (binnenkort beschikbaar)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" disabled>
                 Orders Bekijken
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recente Activiteit</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Geen recente activiteit gevonden.
-              </p>
-            </CardContent>
-          </Card>
+        <div id="quotes-list">
+          <CustomerQuoteList />
         </div>
       </main>
     </div>

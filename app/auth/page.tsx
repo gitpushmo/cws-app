@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
+import { CheckCircle, AlertCircle, Loader2, Eye, EyeOff, Mail } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres'),
@@ -48,17 +48,38 @@ export default function AuthPage() {
   useEffect(() => {
     // Show success message if coming from email verification
     if (searchParams.get('verified') === 'true') {
-      setMessage('E-mail succesvol geverifieerd! U kunt nu inloggen.')
+      setMessage('E-mail succesvol geverifieerd! Welkom bij CWS. U kunt nu inloggen met uw gegevens.')
     }
 
     // Show success message if coming from password update
     if (searchParams.get('updated') === 'true') {
-      setMessage('Wachtwoord succesvol bijgewerkt! U kunt nu inloggen met uw nieuwe wachtwoord.')
+      setMessage('Wachtwoord succesvol bijgewerkt! Log in met uw nieuwe wachtwoord om door te gaan.')
     }
 
-    // Show error message if profile not found
-    if (searchParams.get('error') === 'profile_not_found') {
-      setMessage('Er is een probleem met uw account. Probeer opnieuw in te loggen.')
+    // Show success message if coming from signup completion
+    if (searchParams.get('signup') === 'complete') {
+      setMessage('Account succesvol aangemaakt en geverifieerd! U kunt nu inloggen.')
+    }
+
+    // Handle various error scenarios
+    const error = searchParams.get('error')
+    if (error) {
+      switch (error) {
+        case 'profile_not_found':
+          setMessage('Er is een probleem met uw accountgegevens. Probeer opnieuw in te loggen of neem contact op.')
+          break
+        case 'email_not_verified':
+          setMessage('Uw e-mailadres is nog niet geverifieerd. Controleer uw inbox en klik op de verificatielink.')
+          break
+        case 'invalid_session':
+          setMessage('Uw sessie is verlopen. Log opnieuw in om door te gaan.')
+          break
+        case 'account_disabled':
+          setMessage('Uw account is tijdelijk gedeactiveerd. Neem contact op voor meer informatie.')
+          break
+        default:
+          setMessage('Er is een probleem opgetreden. Probeer het opnieuw.')
+      }
     }
   }, [searchParams])
 
@@ -98,7 +119,27 @@ export default function AuthPage() {
         const result = await response.json()
 
         if (!response.ok) {
-          setMessage(result.error)
+          // Provide more specific error messages based on backend response
+          if (result.error_type) {
+            switch (result.error_type) {
+              case 'email_not_verified':
+                setMessage('Uw e-mailadres is nog niet geverifieerd. Controleer uw inbox en klik op de verificatielink voordat u inlogt.')
+                break
+              case 'invalid_credentials':
+                setMessage('E-mailadres of wachtwoord is onjuist. Controleer uw gegevens en probeer het opnieuw.')
+                break
+              case 'too_many_attempts':
+                setMessage('Te veel inlogpogingen. Wacht een paar minuten voordat u het opnieuw probeert.')
+                break
+              case 'account_locked':
+                setMessage('Uw account is tijdelijk vergrendeld vanwege verdachte activiteit. Probeer later opnieuw.')
+                break
+              default:
+                setMessage(result.error || 'Er is een probleem opgetreden tijdens het inloggen.')
+            }
+          } else {
+            setMessage(result.error || 'Er is een probleem opgetreden tijdens het inloggen.')
+          }
           return
         }
 
@@ -129,7 +170,27 @@ export default function AuthPage() {
         const result = await response.json()
 
         if (!response.ok) {
-          setMessage(result.error)
+          // Provide more specific signup error messages
+          if (result.error_type) {
+            switch (result.error_type) {
+              case 'email_already_exists':
+                setMessage('Dit e-mailadres is al geregistreerd. Probeer in te loggen of gebruik het wachtwoord vergeten formulier.')
+                break
+              case 'weak_password':
+                setMessage('Wachtwoord is te zwak. Gebruik minimaal 6 tekens met een mix van letters en cijfers.')
+                break
+              case 'invalid_email':
+                setMessage('E-mailadres is ongeldig. Controleer het formaat en probeer het opnieuw.')
+                break
+              case 'profile_creation_failed':
+                setMessage('Er ging iets mis bij het aanmaken van uw profiel. Probeer het opnieuw.')
+                break
+              default:
+                setMessage(result.error || 'Er is een probleem opgetreden tijdens registratie.')
+            }
+          } else {
+            setMessage(result.error || 'Er is een probleem opgetreden tijdens registratie.')
+          }
           return
         }
 
@@ -316,24 +377,87 @@ export default function AuthPage() {
               />
 
               {message && (
-                <Alert className={`${
-                  message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt')
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-red-200 bg-red-50'
-                }`}>
-                  {message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt') ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                  )}
-                  <AlertDescription className={`${
+                <div className="space-y-3">
+                  <Alert className={`${
                     message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt')
-                      ? 'text-green-800'
-                      : 'text-red-800'
+                      ? 'border-green-200 bg-green-50'
+                      : message.includes('niet geverifieerd')
+                      ? 'border-blue-200 bg-blue-50'
+                      : 'border-red-200 bg-red-50'
                   }`}>
-                    {message}
-                  </AlertDescription>
-                </Alert>
+                    {message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt') ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : message.includes('niet geverifieerd') ? (
+                      <Mail className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                    )}
+                    <AlertDescription className={`${
+                      message.includes('succesvol geverifieerd') || message.includes('aangemaakt') || message.includes('bijgewerkt')
+                        ? 'text-green-800'
+                        : message.includes('niet geverifieerd')
+                        ? 'text-blue-800'
+                        : 'text-red-800'
+                    }`}>
+                      {message}
+                    </AlertDescription>
+                  </Alert>
+
+                  {/* Show helpful action buttons for specific scenarios */}
+                  {message.includes('niet geverifieerd') && (
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push('/auth/verification-error')}
+                      >
+                        Hulp bij verificatie
+                      </Button>
+                    </div>
+                  )}
+
+                  {message.includes('al geregistreerd') && (
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          setIsLogin(true)
+                          setMessage('')
+                        }}
+                      >
+                        Ga naar inloggen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push('/auth/reset-password')}
+                      >
+                        Wachtwoord vergeten?
+                      </Button>
+                    </div>
+                  )}
+
+                  {message.includes('account is tijdelijk gedeactiveerd') && (
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => window.location.href = 'mailto:support@cws.com'}
+                      >
+                        Contact opnemen
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
 
               <Button
