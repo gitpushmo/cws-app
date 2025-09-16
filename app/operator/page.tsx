@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import LogoutButton from '@/components/auth/logout-button'
+import Link from 'next/link'
 
 export default async function OperatorDashboard() {
   const supabase = await createClient()
@@ -25,6 +26,34 @@ export default async function OperatorDashboard() {
   if (!profile || profile.role !== 'operator') {
     redirect('/auth')
   }
+
+  // Get unassigned pending quotes available to claim
+  const { data: pendingQuotes } = await supabase
+    .from('quotes')
+    .select('id, quote_number, status, created_at')
+    .is('operator_id', null)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true })
+
+  // Get quotes assigned to this operator that need attention
+  const { data: inProgressQuotes } = await supabase
+    .from('quotes')
+    .select('id, quote_number, status, created_at')
+    .eq('operator_id', user.id)
+    .eq('status', 'needs_attention')
+    .order('created_at', { ascending: true })
+
+  // Get quotes this operator completed and are ready for pricing
+  const { data: readyQuotes } = await supabase
+    .from('quotes')
+    .select('id, quote_number, status, created_at')
+    .eq('operator_id', user.id)
+    .eq('status', 'ready_for_pricing')
+    .order('created_at', { ascending: true })
+
+  const pendingCount = pendingQuotes?.length || 0
+  const inProgressCount = inProgressQuotes?.length || 0
+  const readyCount = readyQuotes?.length || 0
 
 
   return (
@@ -56,11 +85,13 @@ export default async function OperatorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-600 mb-2">
-                0
+                {pendingCount}
               </div>
-              <Button className="w-full">
-                Bekijk Wachtrij
-              </Button>
+              <Link href="/operator/queue">
+                <Button className="w-full" disabled={pendingCount === 0}>
+                  Bekijk Wachtrij
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -73,11 +104,13 @@ export default async function OperatorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-orange-600 mb-2">
-                0
+                {inProgressCount}
               </div>
-              <Button variant="outline" className="w-full">
-                Doorgaan met Werk
-              </Button>
+              <Link href="/operator/in-progress">
+                <Button variant="outline" className="w-full" disabled={inProgressCount === 0}>
+                  Doorgaan met Werk
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -90,11 +123,13 @@ export default async function OperatorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600 mb-2">
-                0
+                {readyCount}
               </div>
-              <Button variant="outline" className="w-full">
-                Bekijk Gereed
-              </Button>
+              <Link href="/operator/ready">
+                <Button variant="outline" className="w-full" disabled={readyCount === 0}>
+                  Bekijk Gereed
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
