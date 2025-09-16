@@ -54,6 +54,7 @@ export default async function OperatorQuoteDetailPage({ params }: PageProps) {
       total_cutting_price,
       production_time_hours,
       shipping_address,
+      operator_id,
       profiles!quotes_customer_id_fkey (
         name,
         email,
@@ -79,10 +80,16 @@ export default async function OperatorQuoteDetailPage({ params }: PageProps) {
       )
     `)
     .eq('id', id)
-    .eq('operator_id', user.id)
     .single()
 
   if (error || !quote) {
+    notFound()
+  }
+
+  // Operators can only access quotes that are either:
+  // 1. Assigned to them, or
+  // 2. Unassigned (available for claiming)
+  if (quote.operator_id && quote.operator_id !== user.id) {
     notFound()
   }
 
