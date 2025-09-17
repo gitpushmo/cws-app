@@ -219,6 +219,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Queue email notification to operators about new quote
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/notifications/queue-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': request.headers.get('cookie') || ''
+        },
+        body: JSON.stringify({
+          template_id: 'new_quote_created',
+          quote_id: quote.id
+        })
+      })
+    } catch (emailError) {
+      console.warn('Email notification failed, but quote creation succeeded:', emailError)
+      // Don't fail the quote creation if email fails
+    }
+
     // Return quote with uploaded files info
     return NextResponse.json({
       ...quote,

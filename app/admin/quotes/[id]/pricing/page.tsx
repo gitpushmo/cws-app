@@ -10,6 +10,7 @@ import AdminPricingForm from '@/components/admin/admin-pricing-form'
 import QuoteFilesList from '@/components/quote/quote-files-list'
 import CommentThread from '@/components/quote/comment-thread'
 import QuoteStatusProgress from '@/components/quote/quote-status-progress'
+import PdfUpload from '@/components/admin/pdf-upload'
 
 interface PageProps {
   params: Promise<{
@@ -54,6 +55,8 @@ export default async function AdminQuotePricingPage({ params }: PageProps) {
       total_cutting_price,
       total_customer_price,
       production_time_hours,
+      quote_pdf_url,
+      invoice_pdf_url,
       shipping_address,
       profiles!quotes_customer_id_fkey (
         name,
@@ -301,6 +304,9 @@ export default async function AdminQuotePricingPage({ params }: PageProps) {
               quote={quote}
               userRole={profile.role}
             />
+
+            {/* PDF Upload */}
+            <PdfUpload quote={quote} />
           </div>
         </div>
       </main>

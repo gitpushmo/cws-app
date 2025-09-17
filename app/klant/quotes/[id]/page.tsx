@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, FileText, Image } from 'lucide-react'
 import Link from 'next/link'
-import FileDownloadButton from '@/components/quote/file-download-button'
+import SecureFileDownloadButton from '@/components/quote/secure-file-download-button'
 import CommentThread from '@/components/quote/comment-thread'
+import CustomerQuoteActions from '@/components/quote/customer-quote-actions'
 
 interface QuoteParams {
   id: string
@@ -18,6 +19,7 @@ interface Quote {
   status: string
   notes?: string
   deadline?: string
+  total_customer_price?: number
   shipping_address: {
     street: string
     city: string
@@ -94,6 +96,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
       status,
       notes,
       deadline,
+      total_customer_price,
       shipping_address,
       created_at,
       updated_at,
@@ -220,9 +223,11 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
                               </div>
                             </div>
                             {item.dxf_file_url && (
-                              <FileDownloadButton
-                                fileUrl={item.dxf_file_url}
+                              <SecureFileDownloadButton
                                 fileName={item.dxf_file_name}
+                                filePath={item.dxf_file_url}
+                                bucket="dxf-files"
+                                quoteId={quote.id}
                               />
                             )}
                           </div>
@@ -239,9 +244,11 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
                               </div>
                             </div>
                             {item.pdf_file_url && (
-                              <FileDownloadButton
-                                fileUrl={item.pdf_file_url}
+                              <SecureFileDownloadButton
                                 fileName={item.pdf_file_name}
+                                filePath={item.pdf_file_url}
+                                bucket="pdf-files"
+                                quoteId={quote.id}
                               />
                             )}
                           </div>
@@ -262,6 +269,21 @@ export default async function QuoteDetailPage({ params }: { params: Promise<Quot
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Customer Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Offerte Actie</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CustomerQuoteActions quote={{
+                  id: quote.id,
+                  status: quote.status,
+                  quote_number: quote.quote_number,
+                  total_customer_price: quote.total_customer_price
+                }} />
+              </CardContent>
+            </Card>
+
             {/* Shipping Address */}
             <Card>
               <CardHeader>

@@ -167,6 +167,35 @@ export async function PUT(
       )
     }
 
+    // Queue email notifications for status changes
+    try {
+      let emailTemplateId: string | null = null
+
+      if (newStatus === 'needs_attention') {
+        emailTemplateId = 'quote_needs_attention'
+      } else if (newStatus === 'sent') {
+        emailTemplateId = 'quote_sent'
+      }
+
+      if (emailTemplateId) {
+        // Queue email notification
+        await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/notifications/queue-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': request.headers.get('cookie') || ''
+          },
+          body: JSON.stringify({
+            template_id: emailTemplateId,
+            quote_id: quoteId
+          })
+        })
+      }
+    } catch (emailError) {
+      console.warn('Email notification failed, but status update succeeded:', emailError)
+      // Don't fail the status update if email fails
+    }
+
     return NextResponse.json(updatedQuote)
 
   } catch (error) {

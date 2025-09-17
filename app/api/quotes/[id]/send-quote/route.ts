@@ -115,14 +115,15 @@ export async function POST(
       )
     }
 
-    // CRITICAL: PDF generation and email sending not implemented
-    // This is a placeholder implementation - you NEED to install dependencies:
-    // - @react-pdf/renderer or jsPDF for PDF generation
-    // - nodemailer or Resend for email sending
+    // Check if quote PDF is uploaded (required for sending)
+    if (!quote.quote_pdf_url) {
+      return NextResponse.json(
+        { error: 'Quote PDF moet worden geüpload voordat offerte kan worden verstuurd. Gebruik /api/quotes/[id]/upload-pdf endpoint.' },
+        { status: 400 }
+      )
+    }
 
-    console.warn('PDF generation and email sending not implemented - missing dependencies')
-
-    // For now, simulate the process and update status
+    // Update quote status to sent
     const { data: updatedQuote, error: updateError } = await supabase
       .from('quotes')
       .update({
@@ -142,17 +143,43 @@ export async function POST(
       )
     }
 
-    // TODO: Implement actual PDF generation and email sending
-    // This should:
-    // 1. Generate PDF with quote details, line items, prices
-    // 2. Upload PDF to storage
-    // 3. Send email with PDF attachment to customer
-    // 4. Create audit log entry
+    // Queue email notification to customer
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/notifications/queue-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': request.headers.get('cookie') || ''
+        },
+        body: JSON.stringify({
+          template_id: 'quote_sent',
+          quote_id: quoteId
+        })
+      })
+    } catch (emailError) {
+      console.warn('Email notification failed, but quote sending succeeded:', emailError)
+      // Don't fail the operation if email fails
+    }
+
+    // Add audit log entry
+    await supabase
+      .from('audit_log')
+      .insert({
+        table_name: 'quotes',
+        record_id: quoteId.toString(),
+        action: 'quote_sent',
+        user_id: user.id,
+        new_data: {
+          sent_at: updatedQuote.sent_at,
+          total_customer_price: quote.total_customer_price,
+          quote_pdf_url: quote.quote_pdf_url
+        }
+      })
 
     return NextResponse.json({
-      message: 'Offerte status bijgewerkt naar sent (PDF/email niet geïmplementeerd)',
+      message: 'Offerte succesvol verstuurd naar klant',
       quote: updatedQuote,
-      warning: 'PDF generation and email sending requires additional dependencies'
+      quote_pdf_url: quote.quote_pdf_url
     })
 
   } catch (error) {
