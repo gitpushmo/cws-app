@@ -103,7 +103,8 @@ export default function QuoteProcessingForm({ quote, materials, userRole }: Quot
       })
 
       if (!statusResponse.ok) {
-        throw new Error('Failed to update quote status')
+        const errorData = await statusResponse.json()
+        throw new Error(errorData.error || 'Failed to update quote status')
       }
 
       // Add public comment
@@ -117,7 +118,8 @@ export default function QuoteProcessingForm({ quote, materials, userRole }: Quot
       })
 
       if (!commentResponse.ok) {
-        throw new Error('Failed to add comment')
+        const errorData = await commentResponse.json()
+        throw new Error(errorData.error || 'Failed to add comment')
       }
 
       router.push('/operator')
@@ -165,7 +167,8 @@ export default function QuoteProcessingForm({ quote, materials, userRole }: Quot
         })
 
         if (!response.ok) {
-          throw new Error(`Failed to update line item ${update.lineItemId}`)
+          const errorData = await response.json()
+          throw new Error(errorData.error || `Failed to update line item ${update.lineItemId}`)
         }
       }
 
@@ -185,7 +188,8 @@ export default function QuoteProcessingForm({ quote, materials, userRole }: Quot
       })
 
       if (!statusResponse.ok) {
-        throw new Error('Failed to update quote status')
+        const errorData = await statusResponse.json()
+        throw new Error(errorData.error || 'Failed to update quote status')
       }
 
       // Add internal comment if provided

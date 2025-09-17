@@ -52,7 +52,7 @@ export async function PUT(
       )
     }
 
-    const { status: newStatus } = await request.json()
+    const { status: newStatus, total_cutting_price, production_time_hours } = await request.json()
     if (!newStatus) {
       return NextResponse.json(
         { error: 'Status is verplicht' },
@@ -133,6 +133,14 @@ export async function PUT(
     const updateData: any = {
       status: newStatus,
       updated_at: new Date().toISOString()
+    }
+
+    // Add totals if provided (for ready_for_pricing status)
+    if (total_cutting_price !== undefined) {
+      updateData.total_cutting_price = total_cutting_price
+    }
+    if (production_time_hours !== undefined) {
+      updateData.production_time_hours = production_time_hours
     }
 
     // Set timestamps for specific status changes

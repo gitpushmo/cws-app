@@ -224,9 +224,8 @@ export default async function OperatorQuoteDetailPage({ params }: PageProps) {
               </CardHeader>
               <CardContent>
                 <CommentThread
-                  quoteId={quote.id}
+                  quoteId={quote.id.toString()}
                   userRole={profile.role}
-                  canComment={['pending', 'needs_attention'].includes(quote.status)}
                 />
               </CardContent>
             </Card>

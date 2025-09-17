@@ -83,13 +83,16 @@ export default function CommentThread({ quoteId, userRole }: CommentThreadProps)
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Fout bij versturen reactie')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Fout bij versturen reactie')
       }
 
       const comment = await response.json()
       setComments([...comments, comment])
       setNewComment('')
+
+      // Refresh comments to get proper profile data
+      await fetchComments()
 
     } catch (err) {
       console.error('Error submitting comment:', err)
@@ -168,9 +171,16 @@ export default function CommentThread({ quoteId, userRole }: CommentThreadProps)
                     <span className="font-medium text-sm">
                       {comment.profiles?.name || 'Onbekende gebruiker'}
                     </span>
-                    <Badge variant={getRoleBadgeColor(comment.profiles?.role || 'unknown')} className="text-xs">
-                      {getRoleLabel(comment.profiles?.role || 'unknown')}
-                    </Badge>
+                    {comment.profiles?.role && (
+                      <Badge variant={getRoleBadgeColor(comment.profiles.role)} className="text-xs">
+                        {getRoleLabel(comment.profiles.role)}
+                      </Badge>
+                    )}
+                    {!comment.profiles?.role && (
+                      <Badge variant="outline" className="text-xs">
+                        Onbekend
+                      </Badge>
+                    )}
                     {comment.visibility === 'internal' && (
                       <Badge variant="outline" className="text-xs flex items-center gap-1">
                         <Lock className="h-3 w-3" />

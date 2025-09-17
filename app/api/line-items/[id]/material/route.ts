@@ -40,7 +40,7 @@ export async function PUT(
       )
     }
 
-    const { material_id } = await request.json()
+    const { material_id, cutting_price, production_time_hours } = await request.json()
     if (!material_id) {
       return NextResponse.json(
         { error: 'Material ID is verplicht' },
@@ -105,13 +105,23 @@ export async function PUT(
       )
     }
 
-    // Update line item with material
+    // Update line item with material and optional pricing data
+    const updateData: any = {
+      material_id: material_id,
+      updated_at: new Date().toISOString()
+    }
+
+    // Add cutting price and production time if provided
+    if (cutting_price !== undefined) {
+      updateData.cutting_price = cutting_price
+    }
+    if (production_time_hours !== undefined) {
+      updateData.production_time_hours = production_time_hours
+    }
+
     const { data: updatedLineItem, error: updateError } = await supabase
       .from('line_items')
-      .update({
-        material_id: material_id,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', lineItemId)
       .select(`
         id,

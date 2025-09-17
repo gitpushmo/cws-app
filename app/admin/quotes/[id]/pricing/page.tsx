@@ -274,9 +274,8 @@ export default async function AdminQuotePricingPage({ params }: PageProps) {
               </CardHeader>
               <CardContent>
                 <CommentThread
-                  quoteId={quote.id}
+                  quoteId={quote.id.toString()}
                   userRole={profile.role}
-                  canComment={true}
                 />
               </CardContent>
             </Card>
