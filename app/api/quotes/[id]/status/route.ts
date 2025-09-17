@@ -110,7 +110,26 @@ export async function PUT(
       )
     }
 
-    // Update quote status
+    // First, assign operator if needed (separate transaction to avoid RLS conflicts)
+    if (profile.role === 'operator' && !currentQuote.operator_id) {
+      const { error: assignError } = await supabase
+        .from('quotes')
+        .update({
+          operator_id: user.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', quoteId)
+
+      if (assignError) {
+        console.error('Error assigning operator:', assignError)
+        return NextResponse.json(
+          { error: 'Fout bij toewijzen operator', details: assignError.message },
+          { status: 500 }
+        )
+      }
+    }
+
+    // Now update quote status
     const updateData: any = {
       status: newStatus,
       updated_at: new Date().toISOString()

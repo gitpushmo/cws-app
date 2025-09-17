@@ -79,7 +79,7 @@ export async function GET(
       visibilityFilter = ['public', 'internal'] // Operators and admins see all comments
     }
 
-    // Get comments with author info - use raw SQL to ensure proper JOIN
+    // Get comments with author info
     const { data: comments, error } = await supabase
       .from('comments')
       .select(`
@@ -89,7 +89,7 @@ export async function GET(
         content,
         visibility,
         created_at,
-        profiles:author_id (
+        profiles (
           name,
           role
         )
@@ -208,7 +208,7 @@ export async function POST(
         content,
         visibility,
         created_at,
-        profiles:author_id (
+        profiles (
           name,
           role
         )
